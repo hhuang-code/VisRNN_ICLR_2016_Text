@@ -1,6 +1,7 @@
 import torch
 import pickle
 
+import math
 import re
 import operator
 import os
@@ -17,6 +18,9 @@ class CharSplitLMMinibatchLoader:
 
     @staticmethod
     def create(data_dir, batch_size, seq_length, split_fractions):
+
+        self = {}
+
         input_file = path.join(data_dir, 'warpeace_input.txt')
         vocab_file = path.join(data_dir, 'vocab.pkl')
         tensor_file = path.join(data_dir, 'data.pkl')
@@ -41,6 +45,31 @@ class CharSplitLMMinibatchLoader:
             # construct a tensor with all the data, and vocab file
             print('one-time setup: preprocessing input text file ', input_file, '...')
             CharSplitLMMinibatchLoader.text_to_tensor(input_file, vocab_file, tensor_file)
+
+        print('loading data files...')
+        with open(tensor_file, 'rb') as f:
+            data = pickle.load(f)
+        f.close()
+        with open(vocab_file, 'rb') as f:
+            self['vocab_mapping'] = pickle.load(f)
+        f.close()
+
+        # cutoff the end so that it divides evenly
+        len = data.shape[0]
+        if len % (batch_size * seq_length) != 0:
+            print('cutting off end of data so that the batches/sequences divide evenly')
+            data = data[0: batch_size * seq_length * math.floor(len / (batch_size * seq_length))]
+
+        # count vocab
+        self['vocab_size'] = 0
+        for _ in self['vocab_mapping']:
+            self['vocab_size'] = self['vocab_size'] + 1
+
+        # self['batches'] is a table of tensors
+        print('reshaping tensor...')
+        self['batch_size'] = batch_size
+        self['seq_length'] = seq_length
+
 
     @staticmethod
     def text_to_tensor(in_textfile, out_vocabfile, out_tensorfile):

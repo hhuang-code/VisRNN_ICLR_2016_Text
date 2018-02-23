@@ -24,8 +24,8 @@ def get_config(**kwargs):
                         help = 'data directory. Should contain the file input.txt with input data')
 
     # optimization
-    parser.add_argument('--seq_length', type = int, default = 50, help = 'number of timesteps to unroll for')
-    parser.add_argument('--batch_size', type = int, default = 50, help = 'number of sequences to train on in parallel')
+    parser.add_argument('--seq_length', type = int, default = 6, help = 'number of timesteps to unroll for')
+    parser.add_argument('--batch_size', type = int, default = 4, help = 'number of sequences to train on in parallel')
     parser.add_argument('--train_frac', type = float, default = 0.95, help = 'fraction of data that goes into train set')
     parser.add_argument('--val_frac', type = float, default = 0.05, help = 'fraction of data that goes into validation set')
 
