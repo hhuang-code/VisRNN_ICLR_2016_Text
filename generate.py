@@ -5,7 +5,6 @@ import torch
 import os
 import argparse
 
-from helpers import *
 from model import *
 
 def generate(decoder, prime_str='A', predict_len=100, temperature=0.8, cuda=False):
