@@ -27,16 +27,16 @@ def read_file(filename):
     return file, vocab
 
 # turn a string into a tensor
-def text_to_tensor(text, vocab):
-    text_length = len(text)
-    tensor = torch.zeros(text_length).long()
-    for i in range(text_length):    # for every character
-        try:
-            tensor[i] = vocab.index(text[i])
-        except:
-            continue
-
-    return tensor   # shape:(seq_length,)
+# def text_to_tensor(text, vocab):
+#     text_length = len(text)
+#     tensor = torch.zeros(text_length).long()
+#     for i in range(text_length):    # for every character
+#         try:
+#             tensor[i] = vocab.index(text[i])
+#         except:
+#             continue
+#
+#     return tensor   # shape:(seq_length,)
 
 # time elapsed
 def elapsed_time(start_time):
