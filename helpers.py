@@ -10,11 +10,6 @@ import math
 
 import pdb
 
-# Reading and un-unicode-encoding data
-
-all_characters = string.printable
-n_characters = len(all_characters)
-
 # read in file and generate a vocabulary
 def read_file(filename):
     try:
@@ -31,7 +26,7 @@ def read_file(filename):
 
     return file, vocab
 
-# Turning a string into a tensor
+# turn a string into a tensor
 def text_to_tensor(text, vocab):
     text_length = len(text)
     tensor = torch.zeros(text_length).long()
@@ -41,15 +36,13 @@ def text_to_tensor(text, vocab):
         except:
             continue
 
-    pdb.set_trace()
+    return tensor   # shape:(seq_length,)
 
-    return tensor
-
-# Readable time elapsed
-
-def time_since(since):
-    s = time.time() - since
+# time elapsed
+def elapsed_time(start_time):
+    s = time.time() - start_time
     m = math.floor(s / 60)
     s -= m * 60
+
     return '%dm %ds' % (m, s)
 

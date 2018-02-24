@@ -29,7 +29,7 @@ def get_config(**kwargs):
     # model params
     parser.add_argument('--model', type = str, default = "lstm", help = 'lstm or gru')
     parser.add_argument('--hidden_size', type = int, default = 128, help = 'size of RNN internal state')
-    parser.add_argument('--n_layers', type = int, default = 2, help = 'number of layers in the RNN')
+    parser.add_argument('--n_layers', type = int, default = 1, help = 'number of layers in the RNN')
 
     # optimiaztion
     parser.add_argument('--learning_rate', type = float, default = 0.002, help = 'learning rate')
@@ -39,7 +39,7 @@ def get_config(**kwargs):
     parser.add_argument('--shuffle', action = 'store_true')
 
     # bookkeeping
-    parser.add_argument('--print_every', type = int, default = 100, help = 'how many steps/minibatches between printing out the loss')
+    parser.add_argument('--print_every', type = int, default = 1, help = 'how many steps/minibatches between printing out the loss')
 
     # gpu
     parser.add_argument('--cuda', action = 'store_true')
