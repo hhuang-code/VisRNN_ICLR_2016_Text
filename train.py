@@ -17,22 +17,29 @@ from generate import *
 
 from config import *
 
-def random_training_set(seq_length, batch_size):
-    pdb.set_trace()
-    inp = torch.LongTensor(batch_size, seq_length)
+# generate training set randomly
+def get_train_set(file, vocab, seq_length, batch_size):
+    # two tensors: (batch_size * seq_length)
+    input = torch.LongTensor(batch_size, seq_length)
     target = torch.LongTensor(batch_size, seq_length)
-    for bi in range(batch_size):
-        start_index = random.randint(0, file_len - seq_length)
-        end_index = start_index + seq_length + 1
-        seq = file[start_index: end_index]
-        inp[bi] = char_tensor(seq[:-1])
-        target[bi] = char_tensor(seq[1:])
-    inp = Variable(inp)
+
+    file_length = len(file)
+    for i in range(batch_size): # for every sample in this batch
+        start_idx = random.randint(0, file_length - seq_length) # a random number
+        end_idx = start_idx + seq_length + 1
+        seq = file[start_idx: end_idx]  # seq_length + 1
+        input[i] = text_to_tensor(seq[:-1], vocab)  # exclude the last element
+        target[i] = text_to_tensor(seq[1:], vocab)  # exclude the first element
+
+    input = Variable(input)
     target = Variable(target)
-    if args.cuda:
-        inp = inp.cuda()
+
+    # ship to gpu variable
+    if torch.cuda.is_available() and config.cuda:
+        input = input.cuda()
         target = target.cuda()
-    return inp, target
+
+    return input, target
 
 def train(inp, target):
     hidden = decoder.init_hidden(args.batch_size)
@@ -59,10 +66,10 @@ if __name__ == '__main__':
 
     config = get_config()
 
-    file, file_len = read_file(path.join(config.data_dir, 'input.txt'))
+    file, vocab = read_file(path.join(config.data_dir, 'input.txt'))
 
     # initialize models and start training
-    decoder = CharRNN(n_characters, config.hidden_size, n_characters, model = config.model, n_layers = config.n_layers)
+    decoder = CharRNN(len(vocab), config.hidden_size, len(vocab), model = config.model, n_layers = config.n_layers)
 
     decoder_optimizer = torch.optim.Adam(decoder.parameters(), lr = config.learning_rate)
 
@@ -78,7 +85,7 @@ if __name__ == '__main__':
     try:
         print("Training for %d epochs..." % config.n_epochs)
         for epoch in tqdm(range(1, config.n_epochs + 1)):
-            loss = train(*random_training_set(config.seq_length, config.batch_size))
+            loss = train(*get_train_set(file, vocab, config.seq_length, config.batch_size))
             loss_avg += loss
 
             if epoch % args.print_every == 0:

@@ -22,7 +22,7 @@ def get_config(**kwargs):
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     # data
-    parser.add_argument('--data_dir', type = str, default = '/localdisk/hh/dataset/text/shakespeare',
+    parser.add_argument('--data_dir', type = str, default = '/localdisk/dataset/text/shakespeare',
                         help = 'data directory. Should contain the file input.txt with input data')
     parser.add_argument('--input_file', type = str, default = 'text', help = 'input text. Should be in ASCII format.')
 
