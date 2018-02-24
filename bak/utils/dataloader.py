@@ -1,6 +1,7 @@
 import torch
 import pickle
 
+import gc
 import math
 import re
 import operator
@@ -21,7 +22,7 @@ class CharSplitLMMinibatchLoader:
 
         self = {}
 
-        input_file = path.join(data_dir, 'warpeace_input.txt')
+        input_file = path.join(data_dir, 'input.txt')
         vocab_file = path.join(data_dir, 'vocab.pkl')
         tensor_file = path.join(data_dir, 'data.pkl')
 
@@ -55,10 +56,10 @@ class CharSplitLMMinibatchLoader:
         f.close()
 
         # cutoff the end so that it divides evenly
-        len = data.shape[0]
-        if len % (batch_size * seq_length) != 0:
+        length = data.shape[0]
+        if length % (batch_size * seq_length) != 0:
             print('cutting off end of data so that the batches/sequences divide evenly')
-            data = data[0: batch_size * seq_length * math.floor(len / (batch_size * seq_length))]
+            data = data[0: batch_size * seq_length * math.floor(length / (batch_size * seq_length))]
 
         # count vocab
         self['vocab_size'] = 0
@@ -70,6 +71,47 @@ class CharSplitLMMinibatchLoader:
         self['batch_size'] = batch_size
         self['seq_length'] = seq_length
 
+        ydata = data.clone()
+        ydata[0: -1].copy_(data[1:])
+        ydata[-1] = data[0]
+        self['x_batches'] = data.view(batch_size, -1).split(seq_length, 1)  # |rows| = |batches|
+        self['nbatches'] = len(self['x_batches'])
+        self['y_batches'] = ydata.view(batch_size, -1).split(seq_length, 1) # |rows| = |batches|
+        assert len(self['x_batches']) == len(self['y_batches'])
+
+        # let's try to be helpful here
+        if self['nbatches'] < 50:
+            print('WARNING: than 50 batches in the data in total? Looks like very small dataset. '
+                  'You probably want to use smaller batch_size and/or seq_length.')
+
+        # perform safety checks on split_fractions
+        assert split_fractions['train_frac'] >= 0 and split_fractions['train_frac'] <= 1, \
+            'bad split fraction ' + str(split_fractions['train_frac']) + ' for train, not between 0 and 1'
+        assert split_fractions['val_frac'] >= 0 and split_fractions['val_frac'] <= 1, \
+            'bad split fraction ' + str(split_fractions['val_frac']) + ' for val, not between 0 and 1'
+        assert split_fractions['test_frac'] >= 0 and split_fractions['test_frac'] <= 1, \
+            'bad split fraction ' + str(split_fractions['test_frac']) + ' for test, not between 0 and 1'
+
+        if split_fractions['test_frac'] == 0:
+            # catch a common special case where the user might not want a test set
+            self['ntrain'] = math.floor(self['nbatches'] * split_fractions['train_frac'])
+            self['nval'] = self['nbatches'] - self['ntrain']
+            self['ntest'] = 0
+        else:
+            # divide data to train/val and allocate the rest to test
+            self['ntrain'] = math.floor(self['nbatches'] * split_fractions['train_frac'])
+            self['nval'] = math.floor(self['nbatches'] * split_fractions['val_frac'])
+            self['ntest'] = self['nbatches'] - self['nval'] - self['ntrain']    # the rest goes to test
+
+        self['split_sizes'] = {'ntrain': self['ntrain'], 'nval': self['nval'], 'ntest': self['ntest']}
+        self['batch_ix'] = [0, 0, 0]
+
+        print('Data load done! Number of data batches in train: %d, val: %d, test: %d' %
+              (self['ntrain'], self['nval'], self['ntest']))
+
+        gc.collect()
+
+        return self
 
     @staticmethod
     def text_to_tensor(in_textfile, out_vocabfile, out_tensorfile):
