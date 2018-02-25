@@ -35,7 +35,7 @@ def get_config(**kwargs):
     parser.add_argument('--learning_rate', type = float, default = 0.002, help = 'learning rate')
     parser.add_argument('--seq_length', type = int, default = 70, help = 'number of timesteps to unroll for')
     parser.add_argument('--batch_size', type = int, default = 50, help = 'number of sequences to train on in parallel')
-    parser.add_argument('--max_epochs', type = int, default = 50, help = 'number of full passes through the training data')
+    parser.add_argument('--max_epochs', type = int, default = 30, help = 'number of full passes through the training data')
     parser.add_argument('--train_frac', type = float, default = 0.9, help = 'fraction of data that goes into train set')
     parser.add_argument('--val_frac', type = float, default = 0.05, help = 'fraction of data that goes into validation set')
 
@@ -44,7 +44,7 @@ def get_config(**kwargs):
     parser.add_argument('--model_dir', type = str, default = '/localdisk/models')
 
     # gpu
-    parser.add_argument('--cuda', action = 'store_true')
+    parser.add_argument('--cuda', action = 'store_true', default = True, help = 'whether to use gpu acceleration')
 
     args = parser.parse_args()
 
