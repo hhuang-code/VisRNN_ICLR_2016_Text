@@ -108,12 +108,12 @@ def pred(test_set, train_set, val_set, int_to_char, config):
     train_input_set, _ = train_set[0], train_set[1] # train_set: (train_batches, batch_size, seq_length)
     train_batch_idx = np.random.choice(train_input_set.shape[0])
     train_seq_idx = np.random.choice(config.batch_size)
-    warmup_seq = train_input_set[train_batch_idx][train_seq_idx].unsqueeze(0)
+    warmup_seq = Variable(train_input_set[train_batch_idx][train_seq_idx].unsqueeze(0))
 
     init_hidden = (char_rnn.init_hidden(1)[0], char_rnn.init_hidden(1)[1])
     # ship to gpu if possible
     if torch.cuda.is_available() and config.cuda:
-        warmup_seq = Variable(warmup_seq).cuda()
+        warmup_seq = warmup_seq.cuda()
         # compute initial hidden states for warmup sequence
         init_hidden = (init_hidden[0].cuda(), init_hidden[1].cuda())
 
