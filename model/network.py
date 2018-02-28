@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+import sys
+
 import pdb
 
 class CharRNN(nn.Module):
@@ -16,24 +18,29 @@ class CharRNN(nn.Module):
 
         self.embed = nn.Embedding(input_size, hidden_size)
 
-        if self.model == "lstm":
+        if self.model == "rnn":
+            self.rnn = nn.RNN(hidden_size, hidden_size, n_layers, batch_first = True)
+        elif self.model == "lstm":
             self.rnn = nn.LSTM(hidden_size, hidden_size, n_layers, batch_first = True)
         elif self.model == "gru":
             self.rnn = nn.GRU(hidden_size, hidden_size, n_layers, batch_first = True)
+        else:
+            raise Exception('No such a model! Exit.')
+            sys.exit(-1)
 
         self.proj = nn.Linear(hidden_size, output_size)
 
     def forward(self, input, init_hidden):
         encoded = self.embed(input) # encoded: (batch, seq_length, input_size)
-        output, (h_n, c_n) = self.rnn(encoded, init_hidden)
+        output, hidden = self.rnn(encoded, init_hidden)
         decoded = self.proj(output) # output: (batch, seq_length, hidden_size * num_directions)
 
-        return decoded, (h_n, c_n)
+        return decoded, hidden
 
     def init_hidden(self, batch_size):
         if self.model == "lstm":
-            return (Variable(torch.zeros(self.n_layers, batch_size, self.hidden_size)),
-                    Variable(torch.zeros(self.n_layers, batch_size, self.hidden_size)))
+            return (Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform(-0.08, 0.08)),
+                    Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08)))
 
-        return Variable(torch.zeros(self.n_layers, batch_size, self.hidden_size))
+        return Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08))
 

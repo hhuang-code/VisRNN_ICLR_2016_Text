@@ -1,3 +1,5 @@
+import torch.optim as optim
+
 from tqdm import tqdm
 import numpy as np
 
@@ -31,11 +33,14 @@ def train(train_set, val_set, config):
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(char_rnn.parameters(), lr = config.learning_rate)
+    # learning rate decay
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size = 10, gamma = 0.95)
 
     best_val_loss = sys.float_info.max
     try:
         for epoch_idx in tqdm(range(1, config.max_epochs + 1)): # for evary epoch
             print("Training for %d epochs..." % epoch_idx)
+            scheduler.step()    # lr decay
             running_loss = 0.0
             for batch_idx in range(1, train_input_set.shape[0] + 1):   # for every batch
                 # for every batch
