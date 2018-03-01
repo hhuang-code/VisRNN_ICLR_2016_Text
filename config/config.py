@@ -22,7 +22,7 @@ def get_config(**kwargs):
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     # data
-    parser.add_argument('--data_dir', type = str, default = '/localdisk/hh/dataset/text/shakespeare',
+    parser.add_argument('--data_dir', type = str, default = '/localdisk/dataset/text/shakespeare',
                         help = 'data directory. Should contain the file input.txt with input data')
     parser.add_argument('--input_file', type = str, default = 'text', help = 'input text. Should be in ASCII format.')
 
@@ -41,10 +41,13 @@ def get_config(**kwargs):
 
     # bookkeeping
     parser.add_argument('--print_interval', type = int, default = 10, help = 'how many steps/minibatches between printing out the loss')
-    parser.add_argument('--model_dir', type = str, default = '/localdisk/hh/models')
+    parser.add_argument('--model_dir', type = str, default = '/localdisk/models', help = 'directory for trained model')
 
     # gpu
     parser.add_argument('--cuda', action = 'store_true', default = True, help = 'whether to use gpu acceleration')
+
+    # visualization output
+    parser.add_argument('--vis_dir', type = str, default = './output', help = 'directory for visualization output')
 
     args = parser.parse_args()
 

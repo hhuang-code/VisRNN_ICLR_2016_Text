@@ -38,9 +38,15 @@ class CharRNN(nn.Module):
         return decoded, hidden
 
     def init_hidden(self, batch_size):
-        if self.model == "lstm":
-            return (Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08)),
-                    Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08)))
+        # if self.model == "lstm":
+        #     return (Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08)),
+        #             Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08)))
+        #
+        # return Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08))
 
-        return Variable(torch.Tensor(self.n_layers, batch_size, self.hidden_size).uniform_(-0.08, 0.08))
+        if self.model == "lstm":
+            return (Variable(torch.zeros(self.n_layers, batch_size, self.hidden_size)),
+                    Variable(torch.zeros(self.n_layers, batch_size, self.hidden_size)))
+
+        return Variable(torch.zeros(self.n_layers, batch_size, self.hidden_size))
 

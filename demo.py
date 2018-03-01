@@ -27,7 +27,7 @@ def train(train_set, val_set, config):
     # ship to gpu if possible
     if torch.cuda.is_available() and config.cuda:
         char_rnn.cuda()
-        init_hidden = (init_hidden[0].cuda(), init_hidden[1].cuda())
+        init_hidden = tuple([x.cuda() for x in init_hidden])
         train_input_set, train_target_set = train_input_set.cuda(), train_target_set.cuda()
         val_input_set, val_target_set = val_input_set.cuda(), val_target_set.cuda()
 
@@ -110,12 +110,12 @@ def pred(test_set, train_set, val_set, int_to_char, config):
     train_seq_idx = np.random.choice(config.batch_size)
     warmup_seq = Variable(train_input_set[train_batch_idx][train_seq_idx].unsqueeze(0))
 
-    init_hidden = (char_rnn.init_hidden(1)[0], char_rnn.init_hidden(1)[1])
+    init_hidden = char_rnn.init_hidden(1)
     # ship to gpu if possible
     if torch.cuda.is_available() and config.cuda:
         warmup_seq = warmup_seq.cuda()
         # compute initial hidden states for warmup sequence
-        init_hidden = (init_hidden[0].cuda(), init_hidden[1].cuda())
+        init_hidden = tuple([x.cuda() for x in init_hidden])
 
     # get final hidden state
     _, hidden = char_rnn(warmup_seq, init_hidden)
@@ -124,12 +124,21 @@ def pred(test_set, train_set, val_set, int_to_char, config):
     pred_text = []
     for test_batch_idx in range(1, test_input_set.shape[0] + 1):
         # for every batch
-        test_input = test_input_set[test_batch_idx - 1]
+        test_batch = test_input_set[test_batch_idx - 1]
         # for every sequence in this batch
         for test_seq_idx in range(1, config.batch_size + 1):
             pred = []
-            for ch in test_input[test_seq_idx - 1]: # for every character in this sequence
-                output, init_hidden = char_rnn(ch.view(1, -1), init_hidden)
+            test_seq = test_batch[test_seq_idx - 1]
+            # first character in this sequence
+            output, init_hidden = char_rnn(test_seq[0].view(1, -1), init_hidden)
+            prob, idx = torch.topk(output.data, 1, dim = 2)
+            if idx.is_cuda:
+                pred.append(idx.cpu().squeeze()[0])
+            else:
+                pred.append(idx.squeeze()[0])
+            # predict every remaining character in this sequence
+            for i in range(1, len(test_seq)):
+                output, init_hidden = char_rnn(Variable(idx.view(1, -1)), init_hidden)
                 # choose the one with the highest value
                 prob, idx = torch.topk(output.data, 1, dim = 2)
                 if idx.is_cuda:
@@ -162,7 +171,7 @@ if __name__ == '__main__':
     # val_set and test_set are similar to train_set
     train_set, val_set, test_set, (char_to_int, int_to_char) = create_dataset(config)
 
-    # train(train_set, val_set, config)
+    train(train_set, val_set, config)
 
-    pred(test_set, train_set, val_set, int_to_char, config)
+    # pred(test_set, train_set, val_set, int_to_char, config)
 
