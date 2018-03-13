@@ -109,7 +109,7 @@ def create_dataset(config):
     batch_size = config.batch_size
     seq_length = config.seq_length
     # cutoff the end of the file so that it divides evenly
-    length = data.shape[0]
+    length = data.shape[0]  # number of characters
     if length % (batch_size * seq_length) != 0:
         print('Cutting off end of data so that it divides evenly')
         data = data[0: batch_size * seq_length * math.floor(length / (batch_size * seq_length))]
@@ -132,38 +132,41 @@ def create_dataset(config):
     for i in range(int(len(data) / seq_length)):
         src_seq = data[i * seq_length : (i + 1) * seq_length]   # length: seq_length
         dest_seq = src_seq.clone()
-        dest_seq[0: -1] = src_seq[1:]
+        dest_seq[0: -1] = src_seq[1:]   # '-1' is not included
         dest_seq[-1] = src_seq[0]
         target[i * seq_length : (i + 1) * seq_length] = dest_seq
 
     train_batches = math.floor(split_fractions['train_frac'] * (len(data) / (batch_size * seq_length)))
+    train_idx = 0   # start point of train set
     input_set = torch.LongTensor(train_batches, batch_size, seq_length)
     target_set = torch.LongTensor(train_batches, batch_size, seq_length)
     for i in range(train_batches):
         for j in range(batch_size):
-            start_idx = i * (batch_size * seq_length) + j * seq_length
+            start_idx = train_idx + i * (batch_size * seq_length) + j * seq_length
             end_idx = start_idx + seq_length
             input_set[i][j] = data[start_idx : end_idx]
             target_set[i][j] = target[start_idx: end_idx]
-    train_set = (input_set, target_set)
+    train_set = (input_set, target_set) # a tuple of two 3d tensors
 
     val_batches = math.floor(split_fractions['val_frac'] * (len(data) / (batch_size * seq_length)))
+    val_idx = train_batches * batch_size * seq_length   # start point of validation set
     input_set = torch.LongTensor(val_batches, batch_size, seq_length)
     target_set = torch.LongTensor(val_batches, batch_size, seq_length)
     for i in range(val_batches):
         for j in range(batch_size):
-            start_idx = i * (batch_size * seq_length) + j * seq_length
+            start_idx = val_idx + i * (batch_size * seq_length) + j * seq_length
             end_idx = start_idx + seq_length
             input_set[i][j] = data[start_idx : end_idx]
             target_set[i][j] = target[start_idx: end_idx]
-    val_set = (input_set, target_set)
+    val_set = (input_set, target_set)   # a tuple of two 3d tensors
 
     test_batches = math.floor(split_fractions['test_frac'] * (len(data) / (batch_size * seq_length)))
+    test_idx = (train_batches + val_batches) * batch_size * seq_length  # start point of test set
     input_set = torch.LongTensor(test_batches, batch_size, seq_length)
     target_set = torch.LongTensor(test_batches, batch_size, seq_length)
     for i in range(test_batches):
         for j in range(batch_size):
-            start_idx = i * (batch_size * seq_length) + j * seq_length
+            start_idx = test_idx + i * (batch_size * seq_length) + j * seq_length
             end_idx = start_idx + seq_length
             input_set[i][j] = data[start_idx: end_idx]
             target_set[i][j] = target[start_idx: end_idx]
