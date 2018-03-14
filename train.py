@@ -4,7 +4,7 @@ from tqdm import tqdm
 import numpy as np
 
 from model import *
-from util import *
+from utils import *
 from config import *
 
 import pdb
@@ -110,7 +110,7 @@ def train(train_set, val_set, vocab_size, config):
 
 # use the trained model to make prediction
 def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
-    # not existing trained model, train a new one
+    # no trained model, train a new one
     if not path.exists(path.join(config.model_dir, config.model + '.pth')):
         train(train_set, val_set, vocab_size, config)
 
@@ -161,7 +161,7 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
             # first character in current sequence
             idx = torch.LongTensor([test_seq[0]]).view(1, -1)
 
-            # # ship to gpu if possible
+            # ship to gpu if possible
             if torch.cuda.is_available() and config.cuda:
                 idx = idx.cuda()
 
@@ -213,7 +213,7 @@ if __name__ == '__main__':
 
     config = get_config()   # get configuration parameters
 
-    # train_set = (input_set, target_set), the shape of input_set: (nbatches, batch_size, seq_length)
+    # train_set: (input_set, target_set); input_set: (nbatches, batch_size, seq_length)
     train_set, val_set, test_set, (char_to_int, int_to_char) = create_dataset(config)   # val_set and test_set are similar to train_set
 
     # train(train_set, val_set, len(char_to_int), config)

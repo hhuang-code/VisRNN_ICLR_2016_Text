@@ -1,19 +1,138 @@
-<html>
-<style type='text/css'>
-    html {
-      font-family: Courier;
-    }
-    r {
-      color: #ff0000;
-    }
-    g {
-      color: #00ff00;
-    }
-    b {
-      color: #0000ff;
-    }
-    </style>
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>RNN Visualization</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<h>Test sequence 29</h><br><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><br><br><h>Test sequence 67</h><br><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><br><br><h>Test sequence 444</h><br><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><br><br><h>Test sequence 453</h><br><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><br><br><h>Test sequence 1171</h><br><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><br><br><h>Test sequence 1380</h><br><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><r>y</r><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><b>a</b><br><br>
+  <script src="js/jquery-2.1.3.min.js"></script>
+  <script src="js/d3.min.js"></script>
+  <script src="js/underscore-min.js"></script>
+  <script src="js/sprintf.min.js"></script>
+  <link href='http://fonts.googleapis.com/css?family=Cousine' rel='stylesheet' type='text/css'>
+
+  <style>
+  #wrap {
+    font-family: 'Cousine';
+    position:relative;
+    margin: 10px;
+    font-size: 20px;
+  }
+
+  .d {
+    display: inline-block;
+    width: 20px;
+  }
+  </style>
+
+  <script>
+
+  var c_elem_idx = 0;	// index of cell state vector element
+  var showmore = false;	// flag to show more characters
+
+  function toColor(v) { 
+    // v is -1 to 1 initially
+    if(v > 0) {
+      var h = 200;
+      var s = "60%";
+      v = 1 - v; // invert so v = 0 is highest lightness (white)
+      var l = (Math.floor(v * 40) + 60) + '%';
+    } else {
+      var h = 0;
+      var s = "60%";
+      v = -v;
+      v = 1 - v; // invert too
+      var l = (Math.floor(v * 40) + 60) + '%';
+    }
+    var s = sprintf('hsl(%d,%s,%s)', h,s,l);
+    return s;
+  }
+
+  function render(div, data) {
+    startix = 0;
+
+    if(showmore) {
+      endix = data.seq.length;
+    } else {
+      endix = 4000;
+    }
+
+    div.html('<br>'); // flush
+
+    for(var i = startix; i < endix; i++) {
+      var letter = data.seq[i];
+      
+      var e = data.cell[i][c_elem_idx];	// value of an element in current cell state vector
+      e = Math.tanh(e);
+
+      var color = toColor(e);
+
+      var css = 'background-color:' + color;
+
+      if(letter == ' ') {
+        letter = '&nbsp;';
+        css += ';color:' + color;
+      }
+
+      if(letter == '\n') {
+        css += ';display:block;'
+      }
+
+      var dnew = div.append('div');
+      dnew.attr('class', 'd').attr('style', css).html(letter);
+    }
+    
+    $('#cell-elem-idx').html(c_elem_idx + 1);	// display the index of element in cell vector
+    $('#cell-size').html(data.cell_size);	// size of cell state vectors
+  }
+
+  function start() {
+    $.getJSON("char_cell.json", function(data) {
+      gdata = data; // store in global
+      render(d3.select("#vis"), gdata);
+    });
+  }
+
+
+  function NextEntry() {
+    c_elem_idx += 1;
+    c_elem_idx %= gdata.cell_size;
+    render(d3.select("#vis"), gdata);
+  }
+  function PrevEntry() {
+  	c_elem_idx -= 1;
+    if (c_elem_idx < 0) {
+    	c_elem_idx = gdata.cell_size - 1;
+    }
+    render(d3.select("#vis"), gdata);
+  }
+  function ShowMore() {
+    showmore = true;
+    render(d3.select("#vis"), gdata);
+  }
+  function showLess() {
+    showmore = false;
+    render(d3.select("#vis"), gdata);
+  }
+  </script>
+  </head>
+
+  <body onload="start();">
+    <div id="wrap">
+      <button onclick = "NextEntry()" style = "width:150px; height:30px;">Next Entry</button>
+      <button onclick = "PrevEntry()" style = "width:150px; height:30px;">Previous Entry</button>
+      <button onclick = "ShowMore()" style = "width:150px; height:30px;">Show More</button>
+      <button onclick = "showLess()" style = "width:150px; height:30px;">Show Less</button>
+      
+      &nbsp;&nbsp;&nbsp;&nbsp;Index of entry/Total entries: 
+      <span id = "cell-elem-idx" style="font-weight:bold"></span>/<span span id = "cell-size"></span>
+      
+      <div id = "vis">
+      </div>
+    </div>
+  </body>
 
 </html>

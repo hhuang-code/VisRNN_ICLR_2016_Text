@@ -48,6 +48,7 @@ def get_config(**kwargs):
 
     # visualization output
     parser.add_argument('--vis_dir', type = str, default = './output', help = 'directory for visualization output')
+    parser.add_argument('--max_vis_char', type = int, default = '10000', help = 'maximum number of characters to be visualized')
 
     args = parser.parse_args()
 

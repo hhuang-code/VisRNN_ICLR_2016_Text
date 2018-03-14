@@ -1,5 +1,5 @@
 from config import *
-from util import *
+from utils import *
 from vis import *
 
 if __name__ == '__main__':
@@ -8,4 +8,5 @@ if __name__ == '__main__':
 
     _, _, test_set, (char_to_int, int_to_char) = create_dataset(config)
 
-    vis_cell(test_set, char_to_int, int_to_char, config, mode = 'keepone')
+    # visualize cell state values
+    vis_cell(test_set, char_to_int, int_to_char, len(char_to_int), config)

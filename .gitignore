@@ -102,3 +102,4 @@ ENV/
 
 # project configuration
 .idea/
+*.json
