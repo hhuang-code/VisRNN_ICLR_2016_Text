@@ -19,8 +19,8 @@ def train(train_set, val_set, vocab_size, config):
         char_rnn.cuda()
 
     # train_input_set : (train_batches, batch_size, seq_length); the rest are similar
-    train_input_set, train_target_set = train_set[0], train_set[0]
-    val_input_set, val_target_set = val_set[0], val_set[0]
+    train_input_set, train_target_set = train_set[0], train_set[1]
+    val_input_set, val_target_set = val_set[0], val_set[1]
 
     criterion = nn.CrossEntropyLoss()   # include softmax
     optimizer = torch.optim.Adam(char_rnn.parameters(), lr = config.learning_rate)
@@ -44,23 +44,27 @@ def train(train_set, val_set, vocab_size, config):
                 # for every batch
                 optimizer.zero_grad()   # zero the parameter gradients
 
-                # convert to one-hot vector for every character
-                train_input = Variable(convert_to_onehot(train_input_set[batch_idx - 1], vocab_size))
+                train_input = train_input_set[batch_idx - 1]
 
                 # ship to gpu if possible
                 if torch.cuda.is_available() and config.cuda:
-                    train_input.cuda()
-
-                # forward pass
-                train_output, hidden = char_rnn(train_input, hidden)
+                    train_input = train_input.cuda()
 
                 # compute loss for this batch
                 loss = 0
-                for i in range(config.batch_size):  # for every sequence in this batch
-                    loss += criterion(train_output[i].cpu(), Variable(train_target_set[batch_idx - 1][i]))
+                for i in range(config.seq_length):  # for every time step in this batch
+                    # forward pass
+                    train_output, hidden = char_rnn(Variable(train_input[:, i]), hidden)
+                    # add up loss at each time step
+                    loss += criterion(train_output.view(config.batch_size, -1).cpu(),
+                                      Variable(train_target_set[batch_idx - 1][:, i]))
+
+                # detach hidden state from current computational graph for back-prop
+                for x in hidden:
+                    x.detach_()
 
                 # backward
-                loss.backward(retain_graph = True)
+                loss.backward()
                 optimizer.step()
 
                 # print statistics
@@ -69,22 +73,24 @@ def train(train_set, val_set, vocab_size, config):
                     print('[%d, %4d] loss: %.3f' % (epoch_idx, batch_idx, running_loss / config.print_interval))
                     running_loss = 0.0
 
+                    '''
                     # validate model
                     val_loss = 0
                     # for every batch
                     for val_batch_idx in range(1, val_input_set.shape[0] + 1):
-                        # convert to one-hot vector for every character
-                        val_input = Variable(convert_to_onehot(val_input_set[val_batch_idx - 1], vocab_size))
+
+                        val_input = val_input_set[val_batch_idx - 1]
 
                         # ship to gpu if possible
                         if torch.cuda.is_available() and config.cuda:
-                            val_input.cuda()
+                            val_input = val_input.cuda()
 
-                        # forward pass
-                        val_output, _ = char_rnn(val_input, hidden)
-
-                        for i in range(config.batch_size):  # for every sequence in this batch
-                            val_loss += criterion(val_output[i].cpu(), Variable(val_target_set[val_batch_idx - 1][i]))
+                        for i in range(config.seq_length):  # for every time step in this batch
+                            # forward pass
+                            val_output, _ = char_rnn(Variable(val_input[:, i]), hidden)
+                            # add up loss at each time step
+                            val_loss += criterion(val_output.view(config.batch_size, -1).cpu(),
+                                                  Variable(val_target_set[val_batch_idx - 1][:, i]))
 
                     val_loss /= val_input_set.shape[0]  # loss per batch
                     print('Validation loss: %.3f' % val_loss)
@@ -95,6 +101,8 @@ def train(train_set, val_set, vocab_size, config):
                         torch.save(char_rnn.state_dict(), path.join(config.model_dir, config.model + '.pth'))
                         # to load a saved model: char_rnn = CharRNN(*args, **kwargs), char_rnn.load_state_dict(torch.load(PATH))
                         best_val_loss = val_loss.data[0]
+                    '''
+        torch.save(char_rnn.state_dict(), path.join(config.model_dir, config.model + '.pth'))
 
     except KeyboardInterrupt:
         print("Saving before abnormal quit...")
@@ -126,8 +134,6 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
     train_seq_idx = np.random.choice(config.batch_size)
     # random sequence
     warmup_seq = train_input_set[train_batch_idx][train_seq_idx].unsqueeze(0)
-    # convert to one-hot vector for every character
-    warmup_seq = Variable(convert_to_onehot(warmup_seq, vocab_size))
 
     # initialize hidden state
     hidden = char_rnn.init_hidden(1)   # here, batch_size = 1
@@ -137,28 +143,30 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
         warmup_seq = warmup_seq.cuda()
         hidden = tuple([x.cuda() for x in hidden])
 
-    # get final hidden state
-    _, hidden = char_rnn(warmup_seq, hidden)
+    for i in range(config.seq_length):
+        # get final hidden state
+        _, hidden = char_rnn(Variable(warmup_seq[:, i]), hidden)
 
     for test_batch_idx in range(1, test_input_set.shape[0] + 1):
         # for every batch
         test_batch = test_input_set[test_batch_idx - 1]
         # for every sequence in this batch
         for test_seq_idx in range(1, config.batch_size + 1):
+            # predicted int result (not character)
             pred = []
 
             # current sequence
             test_seq = test_batch[test_seq_idx - 1]
 
             # first character in current sequence
-            idx = Variable(convert_to_onehot(torch.LongTensor([test_seq[0]]).view(1, -1), vocab_size))
+            idx = torch.LongTensor([test_seq[0]]).view(1, -1)
 
             # # ship to gpu if possible
             if torch.cuda.is_available() and config.cuda:
-                idx.cuda()
+                idx = idx.cuda()
 
             # forward pass
-            output, hidden = char_rnn(idx, hidden)  # idx: (1, 1, input_size)
+            output, hidden = char_rnn(Variable(idx), hidden)  # idx: (1, 1, input_size)
 
             # choose the one with the highest value
             prob, idx = torch.topk(output.data, 1, dim = 2)
@@ -167,15 +175,12 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
 
             # predict every remaining character in this sequence
             for i in range(1, len(test_seq)):
-                # convert to one-hot vector for every character
-                idx = Variable(convert_to_onehot(idx.view(1, -1), vocab_size))
-
                 # ship to gpu if possible
                 if torch.cuda.is_available() and config.cuda:
-                    idx.cuda()
+                    idx = idx.cuda()
 
                 # forward pass
-                output, hidden = char_rnn(idx, hidden)
+                output, hidden = char_rnn(Variable(idx.view(1, -1)), hidden)
 
                 # choose the one with the highest value
                 prob, idx = torch.topk(output.data, 1, dim = 2)
@@ -185,8 +190,11 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
             # calculate prediction accuracy
             pred = np.array(pred)
             target = test_target_set[test_batch_idx - 1][test_seq_idx - 1].numpy()
+
+            '''
             accuracy = float(np.where(pred == target)[0].size) / pred.size
             print('Accuracy of [batch %2d, seq %2d] is ' % (test_batch_idx, test_seq_idx) + '{:.2%}'.format(accuracy))
+            '''
 
             # convert target and pred from int to character
             target_text = []
@@ -196,9 +204,9 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
                 pred_text.append(int_to_char[pred[i]])
 
             # display target text and predicted text
-            print('Target ----------------------------')
+            print('Target ----------------------------------------------------------')
             print(''.join(target_text))  # convert from array to string
-            print('Predicted -------------------------')
+            print('Predicted -------------------------------------------------------')
             print(''.join(pred_text))
 
 if __name__ == '__main__':

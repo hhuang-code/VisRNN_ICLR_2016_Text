@@ -16,6 +16,8 @@ class CharRNN(nn.Module):
         self.output_size = output_size
         self.n_layers = n_layers
 
+        self.encoder = nn.Embedding(input_size, input_size)
+
         if self.model == "rnn":
             self.rnn = nn.RNN(input_size, hidden_size, n_layers, batch_first = True)
         elif self.model == "lstm":
@@ -26,11 +28,12 @@ class CharRNN(nn.Module):
             raise Exception('No such a model! Exit.')
             sys.exit(-1)
 
-        self.proj = nn.Linear(hidden_size, output_size)
+        self.decoder = nn.Linear(hidden_size, output_size)
 
     def forward(self, input, init_hidden):
-        output, hidden = self.rnn(input, init_hidden)   # input: (batch, seq_len, input_size)
-        decoded = self.proj(output) # output: (batch, seq_length, hidden_size * num_directions)
+        encoded = self.encoder(input)   # input: (batch)
+        output, hidden = self.rnn(encoded.view(input.shape[0], 1, -1), init_hidden)   # encoded: (batch, 1, input_size)
+        decoded = self.decoder(output) # output: (batch, 1, hidden_size * num_directions)
 
         return decoded, hidden  # decoded: (batch, seq_len, output_size)
 

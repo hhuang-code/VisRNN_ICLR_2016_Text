@@ -22,7 +22,7 @@ def get_config(**kwargs):
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     # data
-    parser.add_argument('--data_dir', type = str, default = '/localdisk/hh/dataset/text/shakespeare',
+    parser.add_argument('--data_dir', type = str, default = '/localdisk/hh/dataset/text/warpeace',
                         help = 'data directory. Should contain the file input.txt with input data')
     parser.add_argument('--input_file', type = str, default = 'text', help = 'input text. Should be in ASCII format.')
 
@@ -33,8 +33,8 @@ def get_config(**kwargs):
 
     # optimiaztion
     parser.add_argument('--learning_rate', type = float, default = 0.002, help = 'learning rate')
-    parser.add_argument('--seq_length', type = int, default = 70, help = 'number of timesteps to unroll for')
-    parser.add_argument('--batch_size', type = int, default = 50, help = 'number of sequences to train on in parallel')
+    parser.add_argument('--seq_length', type = int, default = 200, help = 'number of timesteps to unroll for')
+    parser.add_argument('--batch_size', type = int, default = 100, help = 'number of sequences to train on in parallel')
     parser.add_argument('--max_epochs', type = int, default = 50, help = 'number of full passes through the training data')
     parser.add_argument('--train_frac', type = float, default = 0.8, help = 'fraction of data that goes into train set')
     parser.add_argument('--val_frac', type = float, default = 0.1, help = 'fraction of data that goes into validation set')
