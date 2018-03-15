@@ -102,7 +102,9 @@ def train(train_set, val_set, vocab_size, config):
                         # to load a saved model: char_rnn = CharRNN(*args, **kwargs), char_rnn.load_state_dict(torch.load(PATH))
                         best_val_loss = val_loss.data[0]
                     '''
-        torch.save(char_rnn.state_dict(), path.join(config.model_dir, config.model + '.pth'))
+
+            # save model after each epoch
+            torch.save(char_rnn.state_dict(), path.join(config.model_dir, config.model + '.pth'))
 
     except KeyboardInterrupt:
         print("Saving before abnormal quit...")
@@ -143,6 +145,7 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
         warmup_seq = warmup_seq.cuda()
         hidden = tuple([x.cuda() for x in hidden])
 
+    # warmup network
     for i in range(config.seq_length):
         # get final hidden state
         _, hidden = char_rnn(Variable(warmup_seq[:, i]), hidden)

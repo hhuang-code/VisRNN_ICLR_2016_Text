@@ -32,8 +32,8 @@ def get_config(**kwargs):
     parser.add_argument('--n_layers', type = int, default = 1, help = 'number of layers in the RNN')
 
     # optimiaztion
-    parser.add_argument('--learning_rate', type = float, default = 0.002, help = 'learning rate')
-    parser.add_argument('--seq_length', type = int, default = 200, help = 'number of timesteps to unroll for')
+    parser.add_argument('--learning_rate', type = float, default = 0.01, help = 'learning rate')
+    parser.add_argument('--seq_length', type = int, default = 70, help = 'number of timesteps to unroll for')
     parser.add_argument('--batch_size', type = int, default = 100, help = 'number of sequences to train on in parallel')
     parser.add_argument('--max_epochs', type = int, default = 50, help = 'number of full passes through the training data')
     parser.add_argument('--train_frac', type = float, default = 0.8, help = 'fraction of data that goes into train set')
