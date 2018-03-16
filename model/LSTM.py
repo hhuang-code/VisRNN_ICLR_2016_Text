@@ -1,5 +1,3 @@
-# Thanks to https://discuss.pytorch.org/t/implementation-of-multiplicative-lstm/2328/9
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,71 +15,102 @@ class LSTM(nn.Module):
         self.batch_first = batch_first
 
         # note that nn.Linear contains bias
-        self.Wii_b = nn.Linear(input_size, hidden_size, bias = True)    # input weight for input gate
-        self.Wif_b = nn.Linear(input_size, hidden_size, bias = True)    # input weight for forget gate
-        self.Wic_b = nn.Linear(input_size, hidden_size, bias = True)    # input weight for cell gate
-        self.Wio_b = nn.Linear(input_size, hidden_size, bias = True)    # input weight for output gate
+        self.Wii_b = nn.ModuleList( # input weight for input gate
+            [nn.Linear(input_size, hidden_size, bias = True)] +
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers - 1)])
+        self.Wif_b = nn.ModuleList( # input weight for forget gate
+            [nn.Linear(input_size, hidden_size, bias=True)] +
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers - 1)])
+        self.Wic_b = nn.ModuleList( # input weight for cell gate
+            [nn.Linear(input_size, hidden_size, bias=True)] +
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers - 1)])
+        self.Wio_b = nn.ModuleList( # input weight for output gate
+            [nn.Linear(input_size, hidden_size, bias=True)] +
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers - 1)])
 
-        self.Whi_b = nn.Linear(hidden_size, hidden_size, bias = True)   # hidden weight for input gate
-        self.Whf_b = nn.Linear(hidden_size, hidden_size, bias = True)   # hidden weight for forget gate
-        self.Whc_b = nn.Linear(hidden_size, hidden_size, bias = True)   # hidden weight for cell gate
-        self.Who_b = nn.Linear(hidden_size, hidden_size, bias = True)   # hidden weight for output gate
+        self.Whi_b = nn.ModuleList( # hidden weight for input gate
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers)])
+        self.Whf_b = nn.ModuleList( # hidden weight for forget gate
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers)])
+        self.Whc_b = nn.ModuleList( # hidden weight for cell gate
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers)])
+        self.Who_b = nn.ModuleList( # hidden weight for output gate
+            [nn.Linear(hidden_size, hidden_size, bias = True) for _ in range(num_layers)])
 
     def forward(self, input, hidden):
 
-        # store gate values for t = seq_len; similar to h_n and c_n
-        input_gate_n = None
-        forget_gate_n = None
-        output_gate_n = None
-
-        # recurrence helper, function for one time step
+        # recurrence helper, function for each time step
         def recurrence(input, hidden):
-            # previous states
+            # previous hidden states
             hx, cx = hidden # hx, cx: (num_layers, batch_size, hidden_size)
 
-            # calculate four gates
-            input_gate = self.Wii_b(input) + self.Whi_b(hx)
-            forget_gate = self.Wif_b(input) + self.Whf_b(hx)
-            cell_gate = self.Wic_b(input) + self.Whc_b(hx)
-            output_gate = self.Wio_b(input) + self.Who_b(hx)
+            # store four gate values in all layers for t = seq_len (last time step)
+            all_input_gate, all_forget_gate, all_cell_gate, all_output_gate = [], [], [], []
 
-            # apply non-linearity function
-            input_gate = F.sigmoid(input_gate)
-            forget_gate = F.sigmoid(forget_gate)
-            cell_gate = F.tanh(cell_gate)
-            output_gate = F.sigmoid(output_gate)
+            # for each layer
+            for i in range(self.num_layers):
+                input_gate = self.Wii_b[i](input) + self.Whi_b[i](hx[i])
+                forget_gate = self.Wif_b[i](input) + self.Whf_b[i](hx[i])
+                cell_gate = self.Wic_b[i](input) + self.Whc_b[i](hx[i])
+                output_gate = self.Wio_b[i](input) + self.Who_b[i](hx[i])
 
-            # current states
-            cy = forget_gate * cx + input_gate * cell_gate
-            hy = output_gate * F.tanh(cy)
+                # apply non-linearity function
+                input_gate = F.sigmoid(input_gate)
+                forget_gate = F.sigmoid(forget_gate)
+                cell_gate = F.tanh(cell_gate)
+                output_gate = F.sigmoid(output_gate)
 
-            nonlocal input_gate_n   # pay attention to 'nonlocal' keyword
-            nonlocal forget_gate_n
-            nonlocal output_gate_n
-            # assign gate value to outer variables
-            input_gate_n = input_gate
-            forget_gate_n = forget_gate
-            output_gate_n = output_gate
+                # current states
+                cy = forget_gate * cx[i] + input_gate * cell_gate
+                hy = output_gate * F.tanh(cy)
 
-            return hy, cy
+                if self.num_layers == 1:
+                    hx = hy.unsqueeze(0)    # (batch_size, hidden_size) -> (1, batch_size, hidden_size)
+                    cx = cy.unsqueeze(0)
+                elif self.num_layers > 1:
+                    # update hx and cx in current layer; avoid in-place operation
+                    if i == 0:
+                        hx = torch.cat((hy.unsqueeze(0), hx[(i + 1)::, :, :]), 0)
+                        cx = torch.cat((cy.unsqueeze(0), cx[(i + 1)::, :, :]), 0)
+                    elif i == self.num_layers - 1:
+                        hx = torch.cat((hx[0:i, :, :], hy.unsqueeze(0)), 0)
+                        cx = torch.cat((cx[0:i, :, :], cy.unsqueeze(0)), 0)
+                    else:
+                        hx = torch.cat((hx[0::i, :, :], hy.unsqueeze(0), hx[(i + 1)::, :, :]), 0)
+                        cx = torch.cat((cx[0::i, :, :], cy.unsqueeze(0), cx[(i + 1)::, :, :]), 0)
+                else:
+                    raise Exception('Number of layers should be larger than or equal to 1.')
+
+                # upward to upper layer
+                input = hy
+
+                # store four gate values in current layer
+                all_input_gate.append(input_gate)
+                all_forget_gate.append(forget_gate)
+                all_cell_gate.append(cell_gate)
+                all_output_gate.append(output_gate)
+
+            return (hx, cx), \
+                   {'input_gate' : all_input_gate, 'forget_gate' : all_forget_gate,
+                    'cell_gate' : all_cell_gate, 'output_gate' : all_output_gate}
 
         if self.batch_first:
             input = input.transpose(0, 1)
 
-        output = [] # a list, call cat() before returned
+        gates = {}  # a dictionary to receive gate values
+        output = [] # a list; call cat() before returned
         steps = range(input.size(0))    # seq_len
 
-        for i in steps: # process for each tiem step
-            hidden = recurrence(input[i], hidden)
+        for i in steps: # process for each time step
+            hidden, gates = recurrence(input[i], hidden)
             if isinstance(hidden, tuple):
-                output.append(hidden[0])
+                output.append(hidden[0][self.num_layers - 1].clone().unsqueeze(0))
             else:
-                output.append(hidden)
+                output.append(hidden[self.num_layers - 1].clone().unsqueeze(0))
 
         output = torch.cat(output, 0)
 
         if self.batch_first:
             output = output.transpose(0, 1)
 
-        return output, hidden, \
-               {'input_gate_n' : input_gate_n, 'forget_gate_n' : forget_gate_n, 'output_gate_n' : output_gate_n}
+        return output, hidden, gates    # hidden: (h_n, c_n)

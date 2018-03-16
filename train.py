@@ -54,7 +54,7 @@ def train(train_set, val_set, vocab_size, config):
                 loss = 0
                 for i in range(config.seq_length):  # for every time step in this batch
                     # forward pass
-                    train_output, hidden = char_rnn(Variable(train_input[:, i]), hidden)
+                    train_output, hidden, _ = char_rnn(Variable(train_input[:, i]), hidden) # ignore gate values
                     # add up loss at each time step
                     loss += criterion(train_output.view(config.batch_size, -1).cpu(),
                                       Variable(train_target_set[batch_idx - 1][:, i]))
@@ -87,7 +87,7 @@ def train(train_set, val_set, vocab_size, config):
 
                         for i in range(config.seq_length):  # for every time step in this batch
                             # forward pass
-                            val_output, _ = char_rnn(Variable(val_input[:, i]), hidden)
+                            val_output, _, _ = char_rnn(Variable(val_input[:, i]), hidden)
                             # add up loss at each time step
                             val_loss += criterion(val_output.view(config.batch_size, -1).cpu(),
                                                   Variable(val_target_set[val_batch_idx - 1][:, i]))
@@ -148,7 +148,7 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
     # warmup network
     for i in range(config.seq_length):
         # get final hidden state
-        _, hidden = char_rnn(Variable(warmup_seq[:, i]), hidden)
+        _, hidden, _ = char_rnn(Variable(warmup_seq[:, i]), hidden)
 
     for test_batch_idx in range(1, test_input_set.shape[0] + 1):
         # for every batch
@@ -169,7 +169,7 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
                 idx = idx.cuda()
 
             # forward pass
-            output, hidden = char_rnn(Variable(idx), hidden)  # idx: (1, 1, input_size)
+            output, hidden, _ = char_rnn(Variable(idx), hidden)  # idx: (1, 1, input_size); ignore gate values
 
             # choose the one with the highest value
             prob, idx = torch.topk(output.data, 1, dim = 2)
@@ -183,7 +183,7 @@ def pred(test_set, train_set, val_set, int_to_char, vocab_size, config):
                     idx = idx.cuda()
 
                 # forward pass
-                output, hidden = char_rnn(Variable(idx.view(1, -1)), hidden)
+                output, hidden, _ = char_rnn(Variable(idx.view(1, -1)), hidden) # ingore gate values
 
                 # choose the one with the highest value
                 prob, idx = torch.topk(output.data, 1, dim = 2)

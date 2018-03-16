@@ -30,6 +30,7 @@
 
   <script>
 
+  var layer_idx = 1;	// index of layer
   var c_elem_idx = 0;	// index of cell state vector element
   var showmore = false;	// flag to show more characters
 
@@ -51,21 +52,21 @@
     return s;
   }
 
-  function render(div, data) {
+  function render(div, seq, cell, cell_size) {
     startix = 0;
 
     if(showmore) {
-      endix = data.seq.length;
+      endix = seq.length;
     } else {
-      endix = 4000;
+      endix = Math.min(4000, seq.length);
     }
 
     div.html('<br>'); // flush
 
     for(var i = startix; i < endix; i++) {
-      var letter = data.seq[i];
+      var letter = seq[i];
       
-      var e = data.cell[i][c_elem_idx];	// value of an element in current cell state vector
+      var e = cell[i][c_elem_idx];	// value of an element in current cell state vector
       e = Math.tanh(e);
 
       var color = toColor(e);
@@ -86,13 +87,15 @@
     }
     
     $('#cell-elem-idx').html(c_elem_idx + 1);	// display the index of element in cell vector
-    $('#cell-size').html(data.cell_size);	// size of cell state vectors
+    $('#cell-size').html(cell_size);	// size of cell state vectors
+    $('#layer').html(layer_idx);
   }
 
   function start() {
     $.getJSON("char_cell.json", function(data) {
       gdata = data; // store in global
-      render(d3.select("#vis"), gdata);
+      num_layers = Object.keys(data).length - 2;
+      render(d3.select("#vis"), gdata.seq, gdata['cell_layer_' + layer_idx.toString()], gdata.cell_size);
     });
   }
 
@@ -100,35 +103,56 @@
   function NextEntry() {
     c_elem_idx += 1;
     c_elem_idx %= gdata.cell_size;
-    render(d3.select("#vis"), gdata);
+    render(d3.select("#vis"), gdata.seq, gdata['cell_layer_' + layer_idx.toString()], gdata.cell_size);
   }
+  
   function PrevEntry() {
   	c_elem_idx -= 1;
     if (c_elem_idx < 0) {
     	c_elem_idx = gdata.cell_size - 1;
     }
-    render(d3.select("#vis"), gdata);
+    render(d3.select("#vis"), gdata.seq, gdata['cell_layer_' + layer_idx.toString()], gdata.cell_size);
   }
+  
+  function NextLayer() {
+    layer_idx += 1;
+    if (layer_idx > num_layers) {
+    	layer_idx = 1;
+    }
+    render(d3.select("#vis"), gdata.seq, gdata['cell_layer_' + layer_idx.toString()], gdata.cell_size);
+  }
+  
+  function PrevLayer() {
+  	layer_idx -= 1;
+    if (layer_idx <= 0) {
+    	layer_idx = num_layers;
+    }
+    render(d3.select("#vis"), gdata.seq, gdata['cell_layer_' + layer_idx.toString()], gdata.cell_size);
+  }
+  
   function ShowMore() {
     showmore = true;
-    render(d3.select("#vis"), gdata);
+    render(d3.select("#vis"), gdata.seq, gdata['cell_layer_' + layer_idx.toString()], gdata.cell_size);
   }
+  
   function showLess() {
     showmore = false;
-    render(d3.select("#vis"), gdata);
+    render(d3.select("#vis"), gdata.seq, gdata['cell_layer_' + layer_idx.toString()], gdata.cell_size);
   }
   </script>
   </head>
 
   <body onload="start();">
     <div id="wrap">
-      <button onclick = "NextEntry()" style = "width:150px; height:30px;">Next Entry</button>
-      <button onclick = "PrevEntry()" style = "width:150px; height:30px;">Previous Entry</button>
-      <button onclick = "ShowMore()" style = "width:150px; height:30px;">Show More</button>
-      <button onclick = "showLess()" style = "width:150px; height:30px;">Show Less</button>
+      <button onclick = "NextEntry()" style = "width:110px; height:30px;">Next Entry</button>
+      <button onclick = "PrevEntry()" style = "width:110px; height:30px;">Previous Entry</button>
+      <button onclick = "NextLayer()" style = "width:110px; height:30px;">Next Layer</button>
+      <button onclick = "PrevLayer()" style = "width:110px; height:30px;">Previous Layer</button>
+      <button onclick = "ShowMore()" style = "width:110px; height:30px;">Show More</button>
+      <button onclick = "showLess()" style = "width:110px; height:30px;">Show Less</button>
       
-      &nbsp;&nbsp;&nbsp;&nbsp;Index of entry/Total entries: 
-      <span id = "cell-elem-idx" style="font-weight:bold"></span>/<span span id = "cell-size"></span>
+      &nbsp;&nbsp;&nbsp;Entry/Cell_Size: 
+      <span id = "cell-elem-idx" style="font-weight:bold"></span>/<span span id = "cell-size"></span>&nbsp;&nbsp;Layer:<span id = "layer"></span>
       
       <div id = "vis">
       </div>

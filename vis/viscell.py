@@ -40,7 +40,7 @@ def vis_cell(test_set, int_to_char, vocab_size, config):
     # warmup network
     for i in range(config.seq_length):
         # get final hidden state
-        _, hidden = char_rnn(Variable(warmup_seq[:, i]), hidden)
+        _, hidden, _ = char_rnn(Variable(warmup_seq[:, i]), hidden)
 
     seq = []    # store all test sequences in character form
     cell = []   # 2d array, store all cell state values; each character corresponds to a row; each row is a c_n
@@ -76,9 +76,9 @@ def vis_cell(test_set, int_to_char, vocab_size, config):
             # view one sequence as a batch
             for i in range(config.seq_length):  # for every time step in this batch
                 # forward pass, we do not care about output
-                _, hidden = char_rnn(Variable(test_seq[:, i]), hidden)
+                _, hidden, _ = char_rnn(Variable(test_seq[:, i]), hidden)
                 (_, c_n) = hidden   # c_n: (1, 1, hidden_size); ignore h_n
-                cell.append(c_n.data.cpu().squeeze().numpy().tolist())   # use append() to form a 2d array
+                cell.append(c_n.data.cpu().squeeze().numpy())   # use append() to form a multi-dimensional array
 
             # print progress information
             print('Processing [batch: %d, sequence: %3d]...' % (test_batch_idx, test_seq_idx))
@@ -87,7 +87,16 @@ def vis_cell(test_set, int_to_char, vocab_size, config):
     char_cell = {}
     char_cell['cell_size'] = config.hidden_size
     char_cell['seq'] = ''.join(seq)
-    char_cell['cell'] = cell
+
+    # allocate space for cell values
+    for j in range(config.n_layers):
+        char_cell['cell_layer_' + str(j + 1)] = []
+
+    total_char = len(cell)
+    for i in range(total_char): # for each character (time step)
+        for j in range(config.n_layers):   # for each layer
+            char_cell['cell_layer_' + str(j + 1)].append(cell[i][j].tolist())
+
     with open(path.join(config.vis_dir, 'char_cell.json'), 'w') as json_file:
         json.dump(char_cell, json_file)
 

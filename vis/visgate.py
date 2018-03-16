@@ -41,9 +41,9 @@ def vis_gate(test_set, vocab_size, config):
         # get final hidden state
         _, hidden, _ = char_rnn(Variable(warmup_seq[:, i]), hidden)
 
-    input_gate = [] # store values of input gate for each time step; row per time step, and col per entry in vector
-    forget_gate = []    # store values of forget gate for each time step
-    output_gate = []    # store values of output gate for each time step
+    input_gate = np.empty((config.n_layers, config.seq_length, config.hidden_size))
+    forget_gate = np.empty((config.n_layers, config.seq_length, config.hidden_size))
+    output_gate = np.empty((config.n_layers, config.seq_length, config.hidden_size))
     stop_flag = False  # flag to stop
     for test_batch_idx in range(1, test_input_set.shape[0] + 1):
 
@@ -76,9 +76,10 @@ def vis_gate(test_set, vocab_size, config):
                 # forward pass, we do not care about output
                 _, hidden, gates = char_rnn(Variable(test_seq[:, i]), hidden)
                 # store gate value
-                input_gate.append(gates['input_gate_n'].data.cpu().view(1, -1))
-                forget_gate.append(gates['forget_gate_n'].data.cpu().view(1, -1))
-                output_gate.append(gates['output_gate_n'].data.cpu().view(1, -1))
+                for j in range(config.n_layers):  # for each layer
+                    input_gate[j][i] = gates['input_gate'][j].data.cpu().numpy().squeeze()
+                    forget_gate[j][i] = gates['forget_gate'][j].data.cpu().numpy().squeeze()
+                    output_gate[j][i] = gates['output_gate'][j].data.cpu().numpy().squeeze()
 
             # print progress information
             print('Processing [batch: %d, sequence: %3d]...' % (test_batch_idx, test_seq_idx))
@@ -88,12 +89,17 @@ def vis_gate(test_set, vocab_size, config):
     right_thresh = 0.9  # right saturated threshold
 
     def get_saturated(gate, left_thresh, right_thresh):
-        total_seq_length = len(gate)  # total_seq_length = total character number
-        gate = torch.cat(gate, 0).numpy()  # (total_seq_length, hidden_size)
-        left_s = gate < left_thresh
-        right_s = gate > right_thresh
-        left_s = np.sum(left_s, 0) / total_seq_length  # boradcasting
-        right_s = np.sum(right_s, 0) / total_seq_length
+        left_s = [] # length = num_layers
+        right_s = []
+        total_seq_length = gate.shape[1]  # total_seq_length = total character number
+        for i in range(gate.shape[0]):  # for each layer
+            left_tmp = gate[i] < left_thresh    # gate[i]: (total_seq_length, hidden_size)
+            right_tmp = gate[i] > right_thresh
+            left_tmp = np.sum(left_tmp, 0) / total_seq_length  # boradcasting
+            right_tmp = np.sum(right_tmp, 0) / total_seq_length
+            # add to a list
+            left_s.append(left_tmp)
+            right_s.append(right_tmp)
 
         return left_s, right_s  # left_s/right_s: (hidden_size)
 
